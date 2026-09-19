@@ -61,13 +61,16 @@ docker compose up --build
 
 ## Uso
 
-- Usuario: `admin`
-- Contraseña: la definida en `ADMIN_PASSWORD`
-- Después del login, ingresa el código de 6 dígitos recibido por correo.
+- Inicia sesión con el correo definido en `ADMIN_EMAIL` y la contraseña de `ADMIN_PASSWORD`.
+- Después del login, ingresa el código de 6 dígitos recibido en ese correo.
+- Roles:
+  - `admin`: ve el listado y puede crear, editar y eliminar usuarios.
+  - `usuario`: solo ve el listado.
+- Los usuarios que el admin registre en el CRUD pueden iniciar sesión con su correo y la contraseña asignada. El código de verificación llega a su propio correo.
 
 ## Base de datos
 
-El script `db/init.sql` crea las tablas `admins` (login) y `usuarios` (CRUD) y se ejecuta automáticamente la primera vez que se crea el contenedor de PostgreSQL. Para reiniciar la base desde cero:
+El script `db/init.sql` crea la tabla `usuarios` (id, nombre, email, rol, password_hash) con datos de ejemplo y se ejecuta automáticamente la primera vez que se crea el contenedor de PostgreSQL. Al iniciar, la aplicación crea el usuario admin definido en `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Para reiniciar la base desde cero:
 
 ```powershell
 docker compose down -v
