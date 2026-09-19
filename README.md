@@ -36,7 +36,7 @@ lab3_flask/
 1. Clona el repositorio y entra a la carpeta:
 
 ```powershell
-git clone URL_DEL_REPOSITORIO
+git clone https://github.com/Alexandra06Flores/lab3_flask.git
 cd lab3_flask
 ```
 
