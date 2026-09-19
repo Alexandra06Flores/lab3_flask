@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Panel{% endblock %}
+{% block contenido %}
+<div class="caja ancho">
+    <div class="barra">
+        <h1>Panel de administración</h1>
+        <a class="btn btn-gris" href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+    </div>
+    <p>Bienvenido, <b>{{ usuario }}</b>.</p>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, texto in mensajes %}
+            <div class="msg {{ categoria }}">{{ texto }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="barra">
+        <h2>Usuarios</h2>
+        <a class="btn" href="{{ url_for('panel.crear') }}">+ Nuevo usuario</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.rol }}</td>
+                <td>
+                    <a class="btn btn-gris" href="{{ url_for('panel.editar', id_=u.id) }}">Editar</a>
+                    <form method="post" action="{{ url_for('panel.eliminar', id_=u.id) }}"
+                          style="display:inline"
+                          onsubmit="return confirm('¿Seguro que quieres eliminar a {{ u.nombre }}?');">
+                        <button type="submit" class="btn-rojo">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">No hay usuarios registrados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="caja">
+    <h1>{{ titulo }}</h1>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, texto in mensajes %}
+            <div class="msg {{ categoria }}">{{ texto }}</div>
+        {% endfor %}
+    {% endwith %}
+    <form method="post">
+        <label>Nombre</label>
+        <input type="text" name="nombre" value="{{ u.nombre }}" required>
+        <label>Email</label>
+        <input type="email" name="email" value="{{ u.email }}" required>
+        <label>Rol</label>
+        <select name="rol" required>
+            {% for r in roles %}
+            <option value="{{ r }}" {% if u.rol == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Guardar</button>
+        <a class="btn btn-gris" href="{{ url_for('panel.panel') }}">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

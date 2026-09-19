@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Verificación{% endblock %}
+{% block contenido %}
+<div class="caja">
+    <h1>Verifica tu correo</h1>
+    <p>Enviamos un código de 6 dígitos a <b>{{ email }}</b>.</p>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, texto in mensajes %}
+            <div class="msg {{ categoria }}">{{ texto }}</div>
+        {% endfor %}
+    {% endwith %}
+    <form method="post">
+        <label>Código</label>
+        <input type="text" name="codigo" maxlength="6" required>
+        <button type="submit">Verificar</button>
+        <a class="btn btn-gris" href="{{ url_for('auth.login') }}">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
