@@ -23,6 +23,18 @@ def login_required(f):
     return wrapper
 
 
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("logueado"):
+            return redirect(url_for("auth.login"))
+        if session.get("rol") != "admin":
+            flash("No tienes permiso para hacer esto.", "error")
+            return redirect(url_for("panel.panel"))
+        return f(*args, **kwargs)
+    return wrapper
+
+
 def enmascarar(email):
     nombre, dominio = email.split("@", 1)
     return f"{nombre[0]}***@{dominio}"
@@ -36,28 +48,32 @@ def inicio():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        usuario = request.form.get("usuario", "").strip()
+        email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
 
-        if not usuario or not password:
-            flash("Completa usuario y contraseña.", "error")
+        if not email or not password:
+            flash("Completa correo y contraseña.", "error")
             return render_template("login.html")
 
         conn = get_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM admins WHERE usuario = %s", (usuario,))
-                admin = cur.fetchone()
+                cur.execute(
+                    "SELECT id, nombre, email, rol, password_hash FROM usuarios WHERE email = %s",
+                    (email,),
+                )
+                usuario = cur.fetchone()
         finally:
             conn.close()
 
-        if admin is None or not check_password_hash(admin["password_hash"], password):
-            flash("Usuario o contraseña incorrectos.", "error")
+        if (usuario is None or not usuario["password_hash"]
+                or not check_password_hash(usuario["password_hash"], password)):
+            flash("Correo o contraseña incorrectos.", "error")
             return render_template("login.html")
 
-        # Credenciales OK: generar y enviar el código al correo
+        # Credenciales OK: generar y enviar el código al correo del usuario
         codigo = f"{secrets.randbelow(10**6):06d}"
-        msg = Message("Tu código de verificación", recipients=[admin["email"]])
+        msg = Message("Tu código de verificación", recipients=[usuario["email"]])
         msg.body = f"Tu código de verificación es: {codigo}\nExpira en 5 minutos."
         try:
             mail.send(msg)
@@ -67,10 +83,14 @@ def login():
             return render_template("login.html")
 
         session.clear()
-        session["pendiente"] = admin["usuario"]
+        session["pendiente"] = {
+            "id": usuario["id"],
+            "nombre": usuario["nombre"],
+            "rol": usuario["rol"],
+        }
         session["codigo_hash"] = generate_password_hash(codigo)
         session["expira"] = time.time() + CODIGO_TTL
-        session["email_oculto"] = enmascarar(admin["email"])
+        session["email_oculto"] = enmascarar(usuario["email"])
         return redirect(url_for("auth.verificar"))
 
     return render_template("login.html")
@@ -93,10 +113,12 @@ def verificar():
             flash("Código incorrecto.", "error")
             return render_template("verificar.html", email=session["email_oculto"])
 
-        usuario = session["pendiente"]
+        datos = session["pendiente"]
         session.clear()
         session["logueado"] = True
-        session["usuario"] = usuario
+        session["user_id"] = datos["id"]
+        session["nombre"] = datos["nombre"]
+        session["rol"] = datos["rol"]
         return redirect(url_for("panel.panel"))
 
     return render_template("verificar.html", email=session["email_oculto"])

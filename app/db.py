@@ -16,19 +16,27 @@ def get_connection():
 
 
 def crear_admin_inicial():
-    """Crea el admin de login la primera vez, con la contraseña hasheada."""
+    """Agrega la columna de contraseña si falta y deja al admin inicial como usuario admin."""
     email = os.getenv("ADMIN_EMAIL")
     password = os.getenv("ADMIN_PASSWORD")
     if not email or not password:
         return
+    email = email.strip().lower()
     conn = get_connection()
     try:
         with conn, conn.cursor() as cur:
-            cur.execute("SELECT id FROM admins WHERE usuario = %s", ("admin",))
-            if cur.fetchone() is None:
+            cur.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password_hash TEXT")
+            cur.execute("SELECT id, password_hash FROM usuarios WHERE email = %s", (email,))
+            fila = cur.fetchone()
+            if fila is None:
                 cur.execute(
-                    "INSERT INTO admins (usuario, email, password_hash) VALUES (%s, %s, %s)",
-                    ("admin", email, generate_password_hash(password)),
+                    "INSERT INTO usuarios (nombre, email, rol, password_hash) VALUES (%s, %s, 'admin', %s)",
+                    ("Administrador", email, generate_password_hash(password)),
+                )
+            elif not fila["password_hash"]:
+                cur.execute(
+                    "UPDATE usuarios SET rol = 'admin', password_hash = %s WHERE id = %s",
+                    (generate_password_hash(password), fila["id"]),
                 )
     finally:
         conn.close()

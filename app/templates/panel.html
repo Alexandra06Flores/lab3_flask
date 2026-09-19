@@ -6,7 +6,7 @@
         <h1>Panel de administración</h1>
         <a class="btn btn-gris" href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
     </div>
-    <p>Bienvenido, <b>{{ usuario }}</b>.</p>
+    <p>Bienvenido, <b>{{ nombre }}</b> (rol: {{ rol }}).</p>
 
     {% with mensajes = get_flashed_messages(with_categories=true) %}
         {% for categoria, texto in mensajes %}
@@ -16,12 +16,17 @@
 
     <div class="barra">
         <h2>Usuarios</h2>
+        {% if rol == 'admin' %}
         <a class="btn" href="{{ url_for('panel.crear') }}">+ Nuevo usuario</a>
+        {% endif %}
     </div>
 
     <table>
         <thead>
-            <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr>
+            <tr>
+                <th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th>
+                {% if rol == 'admin' %}<th>Acciones</th>{% endif %}
+            </tr>
         </thead>
         <tbody>
             {% for u in usuarios %}
@@ -30,6 +35,7 @@
                 <td>{{ u.nombre }}</td>
                 <td>{{ u.email }}</td>
                 <td>{{ u.rol }}</td>
+                {% if rol == 'admin' %}
                 <td>
                     <a class="btn btn-gris" href="{{ url_for('panel.editar', id_=u.id) }}">Editar</a>
                     <form method="post" action="{{ url_for('panel.eliminar', id_=u.id) }}"
@@ -38,6 +44,7 @@
                         <button type="submit" class="btn-rojo">Eliminar</button>
                     </form>
                 </td>
+                {% endif %}
             </tr>
             {% else %}
             <tr><td colspan="5">No hay usuarios registrados.</td></tr>
